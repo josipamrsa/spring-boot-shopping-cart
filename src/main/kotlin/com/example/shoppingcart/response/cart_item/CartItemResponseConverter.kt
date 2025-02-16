@@ -1,15 +1,17 @@
-package com.example.shoppingcart.response.shopping_cart_item
+package com.example.shoppingcart.response.cart_item
 
 import com.example.shoppingcart.model.CartItem
 
 fun ShoppingCartItemResponse.toCartItem() = CartItem(
     offerId = offerId,
+    price = price,
     action = action,
-    price = price
+    relatedCartId = relatedCartId
 )
 
 fun CartItem.toShoppingCartItemResponse() = ShoppingCartItemResponse(
     offerId = offerId,
+    price = price,
     action = action,
-    price = price
+    relatedCartId = relatedCartId
 )

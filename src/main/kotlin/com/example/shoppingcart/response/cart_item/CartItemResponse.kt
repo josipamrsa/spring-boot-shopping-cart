@@ -1,10 +1,11 @@
-package com.example.shoppingcart.response.shopping_cart_item
+package com.example.shoppingcart.response.cart_item
 
 import com.example.shoppingcart.model.Price
 import com.example.shoppingcart.model.enums.Action
 
 data class ShoppingCartItemResponse(
     val offerId: String,
-    //val action: Action,
-    val price: Price
+    val price: Price,
+    val action: Action?,
+    val relatedCartId: String?
 )

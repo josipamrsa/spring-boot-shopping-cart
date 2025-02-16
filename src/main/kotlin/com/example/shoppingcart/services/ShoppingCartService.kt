@@ -1,10 +1,9 @@
 package com.example.shoppingcart.services
 
 import com.example.shoppingcart.model.ShoppingCart
-import com.example.shoppingcart.model.enums.Action
 import com.example.shoppingcart.repositories.ShoppingCartRepository
-import com.example.shoppingcart.request.shopping_cart_item.ShoppingCartItemRequest
-import com.example.shoppingcart.request.shopping_cart_item.toCartItem
+import com.example.shoppingcart.request.cart_item.ShoppingCartItemRequest
+import com.example.shoppingcart.request.cart_item.toCartItem
 import org.bson.types.ObjectId
 import org.springframework.stereotype.Service
 
@@ -43,16 +42,9 @@ class ShoppingCartService(
         shoppingCartRepository.save(updatedShoppingCart)
     }
 
-    fun deleteShoppingCart(shoppingCart: ShoppingCart) {
-        shoppingCartRepository.delete(shoppingCart)
+    fun clearShoppingCart(cartId: String): ShoppingCart {
+        val currentCart = shoppingCartRepository.findByCartId(ObjectId(cartId))
+        return shoppingCartRepository.save(currentCart.copy(cartItems = listOf()))
     }
 
-    fun purchaseItems(shoppingCart: ShoppingCart) {
-        val purchasedItems = shoppingCart.cartItems.map { item ->
-            item.copy(action = item.action ?: Action.ADD)
-        }
-
-        val updatedCart = shoppingCart.copy(cartItems = purchasedItems)
-        shoppingCartRepository.save(updatedCart)
-    }
 }

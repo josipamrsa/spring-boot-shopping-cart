@@ -6,4 +6,5 @@ import org.springframework.data.mongodb.repository.MongoRepository
 
 interface CartItemRepository: MongoRepository<CartItem, String> {
     fun findByCartItemId(cartItemId: ObjectId): CartItem
+    fun findByOfferId(offerId: String): List<CartItem>
 }
