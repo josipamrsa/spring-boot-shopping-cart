@@ -2,7 +2,6 @@ package com.example.shoppingcart.model
 
 import com.example.shoppingcart.model.enums.Action
 import org.bson.types.ObjectId
-import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.LastModifiedDate
 import org.springframework.data.mongodb.core.mapping.Document
@@ -19,5 +18,5 @@ data class CartItem(
     val purchasedAt: Instant? = null,
 
     @LastModifiedDate
-    val updatedAt: Date? = null,
+    val updatedAt: Instant? = null,
 )
