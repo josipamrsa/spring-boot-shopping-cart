@@ -3,11 +3,18 @@ package com.example.shoppingcart.controllers
 import com.example.shoppingcart.model.CartItem
 import com.example.shoppingcart.model.enums.Action
 import com.example.shoppingcart.request.cart_item.ShoppingCartItemRequest
+import com.example.shoppingcart.request.cart_item.toPurchasedCartItemRequest
 import com.example.shoppingcart.request.cart_item.toShoppingCartItemRequest
 import com.example.shoppingcart.request.time_period.TimePeriodRequest
+import com.example.shoppingcart.response.cart_item.PurchasedCartItemResponse
+import com.example.shoppingcart.response.cart_item.ShoppingCartItemResponse
+import com.example.shoppingcart.response.cart_item.toPurchasedCartItemResponse
+import com.example.shoppingcart.response.cart_item.toShoppingCartItemResponse
+import com.example.shoppingcart.response.shopping_cart.ShoppingCartResponse
 import com.example.shoppingcart.response.shopping_cart.toShoppingCartResponse
 import com.example.shoppingcart.services.CartItemService
 import com.example.shoppingcart.services.ShoppingCartService
+import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
@@ -22,85 +29,109 @@ class ShoppingCartController(
     private val cartItemService: CartItemService
 ) {
     @PostMapping
-    fun createShoppingCart() =
-        ResponseEntity.ok(
-            shoppingCartService.createShoppingCart().toShoppingCartResponse()
-        )
+    fun createShoppingCart(): ResponseEntity<ShoppingCartResponse> {
+        return try {
+            ResponseEntity.ok(
+                shoppingCartService.createShoppingCart().toShoppingCartResponse()
+            )
+        } catch (e: Exception) {
+            ResponseEntity.internalServerError().build()
+        }
+    }
 
     @GetMapping("/{cartId}")
-    fun fetchAllItemsInCart(@PathVariable cartId: String): ResponseEntity<List<CartItem>> {
-        val items = shoppingCartService.fetchAllCartItems(cartId)
+    fun fetchAllItemsInCart(@PathVariable cartId: String): ResponseEntity<List<ShoppingCartItemResponse>> {
+        return try {
+            val items = shoppingCartService
+                .fetchAllCartItems(cartId)
+                .map { it.toShoppingCartItemResponse() }
 
-        if (items.isEmpty())
-            ResponseEntity.noContent().build<List<CartItem>>()
+            if (items.isEmpty())
+                ResponseEntity.noContent().build()
+            else ResponseEntity.ok(items)
 
-        return ResponseEntity.ok(items)
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.badRequest().build()
+        } catch (e: Exception) {
+            ResponseEntity.internalServerError().build()
+        } catch (e: NotFoundException) {
+            ResponseEntity.notFound().build()
+        }
     }
 
     @PatchMapping("/add_item/{cartId}")
     fun addItemToCart(
         @PathVariable cartId: String,
         @RequestBody request: ShoppingCartItemRequest
-    ): ResponseEntity<List<CartItem>> {
-        try {
+    ): ResponseEntity<List<ShoppingCartItemResponse>> {
+        return try {
             shoppingCartService.addItemToCart(cartId, request)
+            val items = shoppingCartService
+                .fetchAllCartItems(cartId)
+                .map { it.toShoppingCartItemResponse() }
+
+            if (items.isEmpty())
+                ResponseEntity.noContent().build()
+            else ResponseEntity.ok(items)
+
         } catch (e: IllegalArgumentException) {
-            ResponseEntity.badRequest()
+            ResponseEntity.badRequest().build()
         } catch (e: Exception) {
-            ResponseEntity.internalServerError()
+            ResponseEntity.internalServerError().build()
+        } catch (e: NotFoundException) {
+            ResponseEntity.notFound().build()
         }
-
-        val items = shoppingCartService.fetchAllCartItems(cartId)
-
-        if (items.isEmpty())
-            ResponseEntity.noContent().build<List<CartItem>>()
-
-        return ResponseEntity.ok(items)
     }
 
     @PatchMapping("/remove_item/{cartId}")
     fun removeItemFromCart(
         @PathVariable cartId: String,
         @RequestBody request: ShoppingCartItemRequest
-    ): ResponseEntity<List<CartItem>> {
-        try {
+    ): ResponseEntity<List<ShoppingCartItemResponse>> {
+        return try {
             shoppingCartService.removeItemFromCart(cartId, request)
+
+            val items = shoppingCartService
+                .fetchAllCartItems(cartId)
+                .map { it.toShoppingCartItemResponse() }
+
+            if (items.isEmpty())
+                ResponseEntity.noContent().build()
+            else ResponseEntity.ok(items)
         } catch (e: IllegalArgumentException) {
-            ResponseEntity.badRequest()
+            ResponseEntity.badRequest().build()
         } catch (e: Exception) {
-            ResponseEntity.internalServerError()
+            ResponseEntity.internalServerError().build()
+        } catch (e: NotFoundException) {
+            ResponseEntity.notFound().build()
         }
-
-        val items = shoppingCartService.fetchAllCartItems(cartId)
-
-        if (items.isEmpty())
-            ResponseEntity.noContent().build<List<CartItem>>()
-
-        return ResponseEntity.ok(items)
     }
 
     @PostMapping("/purchase/{cartId}")
     fun purchaseItems(@PathVariable cartId: String): ResponseEntity<String> {
-        val cartItems = shoppingCartService.fetchAllCartItems(cartId)
+        return try {
+            val cartItems = shoppingCartService.fetchAllCartItems(cartId)
 
-        if (cartItems.isEmpty())
-            ResponseEntity.noContent().build<List<CartItem>>()
+            if (cartItems.isEmpty())
+                ResponseEntity.noContent().build<List<CartItem>>()
 
-        try {
             cartItemService.saveOrUpdateAllCartItems(cartItems.map {
                 it.toShoppingCartItemRequest().copy(
                     action = it.action ?: Action.ADD,
                     relatedCartId = cartId
                 )
             })
-            shoppingCartService.clearShoppingCart(cartId)
-        } catch (e: IllegalArgumentException) {
-            ResponseEntity.badRequest()
-        } catch (e: Exception) {
-            ResponseEntity.internalServerError()
-        }
 
-        return ResponseEntity.ok("Items successfully purchased!")
+            shoppingCartService.clearShoppingCart(cartId)
+
+            ResponseEntity.ok("Items successfully purchased!")
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.badRequest().build()
+        } catch (e: Exception) {
+            ResponseEntity.internalServerError().build()
+        } catch (e: NotFoundException) {
+            ResponseEntity.notFound().build()
+        }
     }
 
     @PatchMapping("/upgrade_item/{cartItemId}")
@@ -108,15 +139,16 @@ class ShoppingCartController(
         @PathVariable cartItemId: String,
         @RequestBody request: ShoppingCartItemRequest
     ): ResponseEntity<String> {
-        try {
+        return try {
             cartItemService.upgradeRecurringItem(cartItemId, request.relatedCartId)
+            ResponseEntity.ok("Item successfully upgraded!")
         } catch (e: IllegalArgumentException) {
-            ResponseEntity.badRequest()
+            ResponseEntity.badRequest().build()
         } catch (e: Exception) {
-            ResponseEntity.internalServerError()
+            ResponseEntity.internalServerError().build()
+        } catch (e: NotFoundException) {
+            ResponseEntity.notFound().build()
         }
-
-        return ResponseEntity.ok("Item successfully upgraded!")
     }
 
     @PatchMapping("/cancel_item/{cartItemId}")
@@ -124,24 +156,34 @@ class ShoppingCartController(
         @PathVariable cartItemId: String,
         @RequestBody request: ShoppingCartItemRequest
     ): ResponseEntity<String> {
-        try {
+        return try {
             cartItemService.cancelRecurringItem(cartItemId, request.relatedCartId)
+            ResponseEntity.ok("Item successfully canceled!")
         } catch (e: IllegalArgumentException) {
-            ResponseEntity.badRequest()
+            ResponseEntity.badRequest().build()
         } catch (e: Exception) {
-            ResponseEntity.internalServerError()
+            ResponseEntity.internalServerError().build()
+        } catch (e: NotFoundException) {
+            ResponseEntity.notFound().build()
         }
-
-        return ResponseEntity.ok("Item successfully canceled!")
     }
 
     @PostMapping("/statistics")
-    fun fetchSoldItemsInTimePeriod(@RequestBody request: TimePeriodRequest): ResponseEntity<List<CartItem>> {
-        val items = cartItemService.fetchItemStatistics(request.startPeriod, request.endPeriod)
+    fun fetchSoldItemsInTimePeriod(@RequestBody request: TimePeriodRequest): ResponseEntity<List<PurchasedCartItemResponse>> {
+        return try {
+            val items = cartItemService
+                .fetchItemStatistics(request.startPeriod, request.endPeriod)
+                .map { it.toPurchasedCartItemResponse() }
 
-        if (items.isEmpty())
-            ResponseEntity.noContent().build<List<CartItem>>()
-
-        return ResponseEntity.ok(items)
+            if (items.isEmpty())
+                ResponseEntity.noContent().build()
+            else ResponseEntity.ok(items)
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.badRequest().build()
+        } catch (e: Exception) {
+            ResponseEntity.internalServerError().build()
+        } catch (e: NotFoundException) {
+            ResponseEntity.notFound().build()
+        }
     }
 }
