@@ -42,4 +42,15 @@ As mentioned before, user can create a shopping cart, add or remove items as car
 
 Shopping carts are saved in a Mongo `shoppingcarts` document collection. Cart items that are added to the shopping cart, but not yet purchased, will just reside within the shopping cart's `cartItems` field. 
 Once they are purchased, they will be saved in a different Mongo collection called `cartitems`, with each document containing a link to its original shopping cart. This is done so that items, that can be upgraded
-or cancelled, can still be accessible if the user wants to perform one of those actions on the purchased items.
+or cancelled, can still be accessible if the user wants to perform one of those actions on the purchased items. In a real-life scenario, upgrades or cancellations are not usually executed through a shopping cart, but since the task was to implement a shopping cart feature with these requirements, a reference to a shopping cart is still contained for already purchased items.
+
+Functionalities are available through `ShoppingCartController`, the first point of contact for any potential clients. An appropriate request and response DTOs are defined for `ShoppingCart` and `CartItem` entities, as well as some utility DTOs such as `TimePeriod` (used for fetching statistics). Detailed description of each functionality is provided via Swagger API, accessible via `localhost:(port)/swagger-ui/index.html` (if accessed locally), where port value will usually be `8080` if not specified differently. Here is a snapshot of available methods from Swagger API: 
+
+![image](https://github.com/user-attachments/assets/ba506fc6-f6f5-482d-bfc1-df07d390f23b)
+
+![image](https://github.com/user-attachments/assets/daedc017-95ad-4689-9f81-4d2a5003f3c1)
+
+![image](https://github.com/user-attachments/assets/2c342aee-b7cf-4d7f-808e-6cd173a25b8d)
+
+Functionalities defined in `ShoppingCartController` are implemented by using functions described in `ShoppingCartService` and `CartItemService` (from the `services` package), which are used to communicate with Mongo repositories (`CartItemRepository` and `ShoppingCartRepository`) and database. The repositories have custom functions for finding items by their identifiers, but the `CartItemRepository` also defines a custom function for finding cart items in a certain time period. Since all purchased items are also saved with `purchasedAt` field, a query is defined that fetches all items that have this field set between defined start and end dates, sent as arguments from the function.
+
