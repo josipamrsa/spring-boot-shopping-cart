@@ -1,4 +1,4 @@
-# Shopping cart component
+# ShoppingCart component
 
 This project is a simple shopping cart microservice component, built with Spring Boot, Kotlin and MongoDB. It features:
 
@@ -26,7 +26,7 @@ Project follows a typical structure, consisting of following packages (modules):
 
 Since this project uses MongoDB as its database system, database schema consists of `ShoppingCart` and `CartItem` entities. A `ShoppingCart` is defined by its `cartId`, but also contains a field that denotes a list 
 of related `CartItem` items, called `cartItems`. A `CartItem` entity consists of `offerId` (which would represent a product from a product catalog in real-life scenario), `relatedCartId`, `action` that has been 
-executed on it and a `price` field, which is defined by a `Price` complex type. 
+executed on it and a `price` field, which is defined by a `Price` complex type. This entity also contains fields that denote when they were created and last modified.
 
 `Price` type consists of `type`, `value`, and a `numberOfRecurrences` fields, since prices can be both one-time prices or recurring (for example, for subscriptions). The `type` field is defined as a value from
 `PriceType` `enum` class, which supports two aforementioned types. There is also an `Action enum` class, which contains the following options:
@@ -40,4 +40,6 @@ executed on it and a `price` field, which is defined by a `Price` complex type.
 As mentioned before, user can create a shopping cart, add or remove items as cart items, view all items currently in the cart or clear all items in it, purchase items, upgrade or cancel existing purchases 
 (if those are recurring) and view statistics regarding already purchased items in a time period. 
 
-Cart items that are added to the shopping cart, but not yet purchased, will just reside within the shopping cart's cartItems field.
+Shopping carts are saved in a Mongo `shoppingcarts` document collection. Cart items that are added to the shopping cart, but not yet purchased, will just reside within the shopping cart's `cartItems` field. 
+Once they are purchased, they will be saved in a different Mongo collection called `cartitems`, with each document containing a link to its original shopping cart. This is done so that items, that can be upgraded
+or cancelled, can still be accessible if the user wants to perform one of those actions on the purchased items.
