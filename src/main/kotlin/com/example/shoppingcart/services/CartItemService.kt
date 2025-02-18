@@ -13,23 +13,42 @@ import java.time.Instant
 class CartItemService(
     private val cartItemRepository: CartItemRepository
 ) {
-    fun saveOrUpdateAllCartItems(request: List<ShoppingCartItemRequest>): List<CartItem> =
-        cartItemRepository.saveAll(request.map { item ->
+    /**
+     * Cancels an item that was already purchased (for recurring purchases, such as a subscription).
+     * @param cartItems All cart items to save.
+     */
+    fun saveOrUpdateAllCartItems(cartItems: List<ShoppingCartItemRequest>): List<CartItem> =
+        cartItemRepository.saveAll(cartItems.map { item ->
             item
                 .toCartItem()
                 .copy(purchasedAt = Instant.now())
         })
 
-    fun upgradeRecurringItem(cartItemId: String, cartId: String?) {
+    /**
+     * Upgrades an item that was already purchased (for recurring purchases, such as a subscription).
+     * @param cartItemId Identifier for the cart item
+     * @param cartId Identifier for existing shopping cart
+     */
+    fun upgradeItem(cartItemId: String, cartId: String?) {
         val itemToUpgrade = cartItemRepository.findByCartItemId(ObjectId(cartItemId))
         cartItemRepository.save(itemToUpgrade.copy(action = Action.MODIFY))
     }
 
-    fun cancelRecurringItem(cartItemId: String, cartId: String?) {
+    /**
+     * Cancels an item that was already purchased (for recurring purchases, such as a subscription).
+     * @param cartItemId Identifier for the cart item
+     * @param cartId Identifier for existing shopping cart
+     */
+    fun cancelItem(cartItemId: String, cartId: String?) {
         val itemToCancel = cartItemRepository.findByCartItemId(ObjectId(cartItemId))
         cartItemRepository.save(itemToCancel.copy(action = Action.DELETE))
     }
 
+    /**
+     * Fetches item statistics, i.e. items that were purchased in a specified time period.
+     * @param startPeriod Start date
+     * @param endPeriod End date
+     */
     fun fetchItemStatistics(startPeriod: Instant, endPeriod: Instant) =
         cartItemRepository.findBetweenStartAndEndPeriod(startPeriod, endPeriod)
 }

@@ -11,15 +11,27 @@ import org.springframework.stereotype.Service
 class ShoppingCartService(
     private val shoppingCartRepository: ShoppingCartRepository
 ) {
+    /**
+     * Creates a new shopping cart.
+     */
     fun createShoppingCart() = shoppingCartRepository.save(ShoppingCart())
 
+    /**
+     * Fetches all cart items currently added to a cart.
+     * @param cartId Identifier for existing shopping cart
+     */
     fun fetchAllCartItems(cartId: String) =
         shoppingCartRepository.findByCartId(ObjectId(cartId)).cartItems
 
-    fun addItemToCart(cartId: String, request: ShoppingCartItemRequest) {
+    /**
+     * Adds a new item to the cart.
+     * @param cartId Identifier for existing shopping cart
+     * @param cartItem Cart item to add
+     */
+    fun addItemToCart(cartId: String, cartItem: ShoppingCartItemRequest) {
         val currentShoppingCart = shoppingCartRepository.findByCartId(ObjectId(cartId))
         val updatedCartItems = currentShoppingCart.cartItems.toMutableList().plus(
-            request.toCartItem()
+            cartItem.toCartItem()
         )
 
         val updatedShoppingCart = currentShoppingCart.copy(
@@ -29,10 +41,15 @@ class ShoppingCartService(
         shoppingCartRepository.save(updatedShoppingCart)
     }
 
-    fun removeItemFromCart(cartId: String, request: ShoppingCartItemRequest) {
+    /**
+     * Removes an item from the cart.
+     * @param cartId Identifier for existing shopping cart
+     * @param cartItem Cart item to remove
+     */
+    fun removeItemFromCart(cartId: String, cartItem: ShoppingCartItemRequest) {
         val currentShoppingCart = shoppingCartRepository.findByCartId(ObjectId(cartId))
         val updatedCartItems = currentShoppingCart.cartItems.toMutableList().minus(
-            request.toCartItem()
+            cartItem.toCartItem()
         )
 
         val updatedShoppingCart = currentShoppingCart.copy(
@@ -42,6 +59,10 @@ class ShoppingCartService(
         shoppingCartRepository.save(updatedShoppingCart)
     }
 
+    /**
+     * Clears all items from the shopping cart.
+     * @param cartId Identifier for existing shopping cart
+     */
     fun clearShoppingCart(cartId: String): ShoppingCart {
         val currentCart = shoppingCartRepository.findByCartId(ObjectId(cartId))
         return shoppingCartRepository.save(currentCart.copy(cartItems = listOf()))
