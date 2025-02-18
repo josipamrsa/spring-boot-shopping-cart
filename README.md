@@ -28,6 +28,8 @@ Since this project uses MongoDB as its database system, database schema consists
 of related `CartItem` items, called `cartItems`. A `CartItem` entity consists of `offerId` (which would represent a product from a product catalog in real-life scenario), `relatedCartId`, `action` that has been 
 executed on it and a `price` field, which is defined by a `Price` complex type. This entity also contains fields that denote when they were created and last modified.
 
+<sup>Note: MongoDB credentials are hardcoded just for application demonstration purposes, as it's not deployed anywhere. If deploying in cloud environment, use environment variables or another equivalent. Never hardcode any sensitive data.</sup>
+
 `Price` type consists of `type`, `value`, and a `numberOfRecurrences` fields, since prices can be both one-time prices or recurring (for example, for subscriptions). The `type` field is defined as a value from
 `PriceType` `enum` class, which supports two aforementioned types. There is also an `Action enum` class, which contains the following options:
 
