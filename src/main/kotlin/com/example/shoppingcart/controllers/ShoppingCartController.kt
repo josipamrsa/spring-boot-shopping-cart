@@ -46,7 +46,7 @@ class ShoppingCartController(
     @GetMapping("/{cartId}")
     fun fetchAllItemsInCart(
         @Parameter(name = "cartId", description = "Unique cart identifier", example = "1")
-        @PathVariable  cartId: String,
+        @PathVariable cartId: String,
     ): ResponseEntity<List<ShoppingCartItemResponse>> {
         return try {
             val items = shoppingCartService
@@ -168,6 +168,30 @@ class ShoppingCartController(
         }
     }
 
+    @Operation(summary = "Fetches all of the already purchased items by cartId.")
+    @GetMapping("/purchased_items/{cartId}")
+    fun fetchPurchasedItems(
+        @Parameter(name = "cartId", description = "Unique cart item identifier", example = "1")
+        @PathVariable cartId: String,
+    ): ResponseEntity<List<PurchasedCartItemResponse>> {
+        return try {
+            val items = cartItemService
+                .fetchPurchasedItems(cartId)
+                .map { it.toPurchasedCartItemResponse() }
+
+            if (items.isEmpty())
+                ResponseEntity.noContent().build()
+            else ResponseEntity.ok(items)
+
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.badRequest().build()
+        } catch (e: Exception) {
+            ResponseEntity.internalServerError().build()
+        } catch (e: NotFoundException) {
+            ResponseEntity.notFound().build()
+        }
+    }
+
     @Operation(summary = "Upgrades an item that was already purchased. Items being upgraded are assigned a MODIFY action to their action field.")
     @PatchMapping("/upgrade_item/{cartItemId}")
     fun upgradeItem(
@@ -176,8 +200,14 @@ class ShoppingCartController(
         @RequestBody request: ShoppingCartItemRequest
     ): ResponseEntity<String> {
         return try {
-            cartItemService.upgradeItem(cartItemId, request.relatedCartId)
-            ResponseEntity.ok("Item successfully upgraded!")
+            // If no relatedCartId provided, then it's a bad request
+            if (request.relatedCartId == null)
+                return ResponseEntity.badRequest().build()
+            else {
+                cartItemService.upgradeItem(cartItemId, request.relatedCartId)
+                return ResponseEntity.ok("Item successfully upgraded!")
+            }
+
         } catch (e: IllegalArgumentException) {
             ResponseEntity.badRequest().build()
         } catch (e: Exception) {
@@ -195,8 +225,13 @@ class ShoppingCartController(
         @RequestBody request: ShoppingCartItemRequest
     ): ResponseEntity<String> {
         return try {
-            cartItemService.cancelItem(cartItemId, request.relatedCartId)
-            ResponseEntity.ok("Item successfully canceled!")
+            // If no relatedCartId provided, then it's a bad request
+            if (request.relatedCartId == null)
+                return ResponseEntity.badRequest().build()
+            else {
+                cartItemService.cancelItem(cartItemId, request.relatedCartId)
+                ResponseEntity.ok("Item successfully canceled!")
+            }
         } catch (e: IllegalArgumentException) {
             ResponseEntity.badRequest().build()
         } catch (e: Exception) {
@@ -206,9 +241,11 @@ class ShoppingCartController(
         }
     }
 
-    @Operation(summary = "Fetches purchase statistics from already purchased items (how many items were purchased in specified time period). " +
-            "Date of the purchase corresponds to the date of creation of item in the database." +
-            "Start date should never be greater than end date, otherwise a Bad Request (400) status is returned.")
+    @Operation(
+        summary = "Fetches purchase statistics from already purchased items (how many items were purchased in specified time period). " +
+                "Date of the purchase corresponds to the date of creation of item in the database." +
+                "Start date should never be greater than end date, otherwise a Bad Request (400) status is returned."
+    )
     @PostMapping("/statistics")
     fun fetchSoldItemsInTimePeriod(
         @RequestBody request: TimePeriodRequest

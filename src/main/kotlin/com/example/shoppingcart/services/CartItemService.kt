@@ -14,6 +14,13 @@ class CartItemService(
     private val cartItemRepository: CartItemRepository
 ) {
     /**
+     * Fetches all purchased items by provided cartId.
+     * @param cartId Identifier for existing shopping cart
+     */
+    fun fetchPurchasedItems(cartId: String) : List<CartItem> =
+        cartItemRepository.findByRelatedCartId(cartId)
+
+    /**
      * Cancels an item that was already purchased (for recurring purchases, such as a subscription).
      * @param cartItems All cart items to save.
      */
@@ -29,7 +36,7 @@ class CartItemService(
      * @param cartItemId Identifier for the cart item
      * @param cartId Identifier for existing shopping cart
      */
-    fun upgradeItem(cartItemId: String, cartId: String?) {
+    fun upgradeItem(cartItemId: String, cartId: String) {
         val itemToUpgrade = cartItemRepository.findByCartItemId(ObjectId(cartItemId))
         cartItemRepository.save(itemToUpgrade.copy(action = Action.MODIFY))
     }
@@ -39,7 +46,7 @@ class CartItemService(
      * @param cartItemId Identifier for the cart item
      * @param cartId Identifier for existing shopping cart
      */
-    fun cancelItem(cartItemId: String, cartId: String?) {
+    fun cancelItem(cartItemId: String, cartId: String) {
         val itemToCancel = cartItemRepository.findByCartItemId(ObjectId(cartItemId))
         cartItemRepository.save(itemToCancel.copy(action = Action.DELETE))
     }

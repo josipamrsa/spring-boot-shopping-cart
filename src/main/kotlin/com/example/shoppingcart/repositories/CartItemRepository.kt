@@ -9,6 +9,9 @@ import java.time.Instant
 interface CartItemRepository: MongoRepository<CartItem, String> {
     fun findByCartItemId(cartItemId: ObjectId): CartItem
 
+    //@Query("{ 'relatedCartId': ?0 }")
+    fun findByRelatedCartId(relatedCartId: String) : List<CartItem>
+
     @Query("{ 'purchasedAt': { \$gte: ?0, \$lte: ?1 } }")
     fun findBetweenStartAndEndPeriod(start: Instant, end: Instant) : List<CartItem>
 }
