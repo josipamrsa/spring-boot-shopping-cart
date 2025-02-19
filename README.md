@@ -7,6 +7,7 @@ This project is a simple shopping cart microservice component, built with Spring
 - Adding or removing cart items from the shopping cart
 - Clearing the shopping cart
 - Purchasing cart items
+- Viewing already purchased items
 - Modifying purchased items
 - Viewing purchase statistics on various offers
 
@@ -40,7 +41,7 @@ executed on it and a `price` field, which is defined by a `Price` complex type. 
 ## Functionalities
 
 As mentioned before, user can create a shopping cart, add or remove items as cart items, view all items currently in the cart or clear all items in it, purchase items, upgrade or cancel existing purchases 
-(if those are recurring) and view statistics regarding already purchased items in a time period. 
+(if those are recurring) and view already purchased items and statistics regarding already purchased items in a time period. 
 
 Shopping carts are saved in a Mongo `shoppingcarts` document collection. Cart items that are added to the shopping cart, but not yet purchased, will just reside within the shopping cart's `cartItems` field. 
 Once they are purchased, they will be saved in a different Mongo collection called `cartitems`, with each document containing a link to its original shopping cart. This is done so that items, that can be upgraded
@@ -48,7 +49,7 @@ or cancelled, can still be accessible if the user wants to perform one of those 
 
 Functionalities are available through `ShoppingCartController`, the first point of contact for any potential clients. An appropriate request and response DTOs are defined for `ShoppingCart` and `CartItem` entities, as well as some utility DTOs such as `TimePeriod` (used for fetching statistics). Detailed description of each functionality is provided via Swagger API, accessible via `localhost:(port)/swagger-ui/index.html` (if accessed locally), where port value will usually be `8080` if not specified differently. Here is a snapshot of available methods from Swagger API: 
 
-![image](https://github.com/user-attachments/assets/ba506fc6-f6f5-482d-bfc1-df07d390f23b)
+![image](https://github.com/user-attachments/assets/e9037ecd-42ad-4ac2-bc8e-94765f7dbd08)
 
 ![image](https://github.com/user-attachments/assets/daedc017-95ad-4689-9f81-4d2a5003f3c1)
 
